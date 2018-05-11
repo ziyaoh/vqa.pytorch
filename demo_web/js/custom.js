@@ -103,7 +103,7 @@ var formBasic = function () {
                 ul.append(img);
             }
 
-            $('#vqa-answer').append(ul);
+            $('#vqa-answer').empty().append(ul);
         }
     });
     return false;
