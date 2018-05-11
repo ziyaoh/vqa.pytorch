@@ -1,54 +1,80 @@
 $(document).ready(function () {
 
+var img = null;
 // Image
 
 $(document).on('change', '.btn-file :file', function() {
     var input = $(this),
         label = input.val().replace(/\\/g, '/').replace(/.*\//, '');
     input.trigger('fileselect', [label]);
-    });
+});
 
-    $('.btn-file :file').on('fileselect', function(event, label) {
-        
-        var input = $(this).parents('.input-group').find(':text'),
-            log = label;
-        
-        if( input.length ) {
-            input.val(log);
-        } else {
-            if( log ) alert(log);
-        }
+$('.btn-file :file').on('fileselect', function(event, label) {
     
-    });
-    function readURL(input) {
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            
-            reader.onload = function (e) {
-                $('#vqa-visual').attr('src', e.target.result);
-            }
-            
-            reader.readAsDataURL(input.files[0]);
-        }
+    var input = $(this).parents('.input-group').find(':text'),
+        log = label;
+    
+    if( input.length ) {
+        input.val(log);
+    } else {
+        if( log ) alert(log);
     }
 
-    $("#imgInp").change(function(){
-        readURL(this);
-    });     
+});
+function readURL(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        
+        reader.onload = function (e) {
+            $('#vqa-visual').attr('src', e.target.result);
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+$("#imgInp").change(function(){
+    readURL(this);
+});     
+
+var getImg = function () {
+    // var formData = $("#formBasic").serialize();
+    $.ajax({
+
+        type: 'GET',
+        url: 'https://clam.cs.washington.edu/pancake/vqa/img', // your global ip address and port
+        cache: false,
+
+        error: function (xhr, status, thrown) {
+            alert("There was an error processing this page.");
+            console.log(xhr);
+            console.log(status);
+            console.log(thrown);
+            return false;
+        },
+
+        success: function (output) {
+            console.log(output);
+            img = output['id'];
+            $('#vqa-visual').attr('src', 'data:image/jpeg;base64,' + output['img']);
+        }
+    });
+}
 
 // Send Image + Question
 
 var formBasic = function () {
     var formData = $("#formBasic").serialize();
-    var data = { visual : $('#vqa-visual').attr('src'),
+    var data = { visual : img,
                  question : $('#vqa-question').val()}
     console.log(data);
     $.ajax({
 
         type: 'post',
-        data: data,
+        data: JSON.stringify(data),
+        contentType: 'application/json',
         dataType: 'json',
-        url: 'http://', // your global ip address and port
+        url: 'https://clam.cs.washington.edu/pancake/vqa/query', // your global ip address and port
 
         // error: function () {
         //     alert("There was an error processing this page.");
@@ -56,7 +82,7 @@ var formBasic = function () {
         // },
 
         complete: function (output) {
-            //console.log(output);
+            console.log(output);
             //console.log(output.responseText);
             var ul = $('<ul></ul>');
             for (i=0; i < output.responseJSON.ans.length; i++)
@@ -83,7 +109,12 @@ var formBasic = function () {
     return false;
 };
 
-   $("#basic-submit").on("click", function (e) {
+$("#basic-img").on("click", function (e) {
+    e.preventDefault();
+    getImg();
+ });
+
+$("#basic-submit").on("click", function (e) {
    e.preventDefault();
    formBasic();
 });
